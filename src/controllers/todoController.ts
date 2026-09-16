@@ -11,6 +11,25 @@ export const getTodos = async (req: Request, res: Response): Promise<void> => {
     }
 };
 
+//GET /api/todos/:id - Ambil satu todo berdasarkan ID
+export const getTodoById = async (req: Request, res: Response): Promise<void> => {
+    const { id } = req.params;
+    const userId = res.locals.userId;
+    try {
+        const todo = await TodoModel.getById(Number(id), userId);
+
+        // Jika undefined, berarti todo tidak ditemukan atau bkan milik userr ini
+        if (!todo) {
+            res.status(404).json({ success: false, message: 'Tugas tidak ditemukan!' });
+            return;
+        }
+
+        res.status(200).json({ success: true, data: todo });
+    } catch (error) {
+        res.status(500).json({ success: false, message: 'Gagal mengambil data.' });
+    }
+};
+
 export const createTodo = async (req: Request, res: Response): Promise<void> => {
     const { task } = req.body;
     const userId = res.locals.userId; // Ambil dari res.locals
@@ -27,3 +46,42 @@ export const createTodo = async (req: Request, res: Response): Promise<void> => 
         res.status(500).json({ success: false, message: 'Gagal menambahkan tugas.' });
     }
 };
+
+// PUT /api/todos/:id - Update todo (ubah task atau tandai selesai)
+export const updateTodo = async (req: Request, res: Response): Promise<void> => {
+    const { id } = req.params;
+    const { task, is_completed } = req.body;
+    const userId = res.locals.userId;
+    try {
+        const affectedRows = await TodoModel.update(Number(id), task, is_completed, userId);
+
+        // Jika affecedRowns = 0, berarti todo tidak di temukan atau bukan milik user ini
+        if ( affectedRows === 0) {
+            res.status(404).json({ success: false, message: 'Tugas tidak ditemuukan!' });
+            return;
+        }
+
+        res.status(200).json({ success: true, message: 'Tugas berhasil diperbarui!' });
+    } catch (error) {
+        res.status(500).json({ success: false, message: 'Gagal memperbarui tugas.' });
+    }
+};
+
+// Delete /api/todos/:id - Hapus todo
+export const deleteTodo = async (req: Request, res: Response): Promise<void> => {
+    const { id } = req.params;
+    const userId = res.locals.userId;
+    try {
+        const affecedRowns = await TodoModel.delete(Number(id), userId);
+
+        // Jika effectedRows = 00, berarti todo tidak ditemukan atau bukan milik user ini
+        if (affecedRowns === 0) {
+            res.status(404).json({ succeses: false, message: 'Tugas tidak ditemukan!' });
+            return;
+        }
+
+        res.status(200).json({ success: true, message: 'TUgas berhasil dihapus!' });
+    } catch (error) {
+        res.status(500).json({ success: false, message: 'Gagal menghapus tugas.' });
+    }
+}
